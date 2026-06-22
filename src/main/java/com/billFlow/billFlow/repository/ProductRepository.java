@@ -2,6 +2,8 @@
 package com.billFlow.billFlow.repository;
 
 import com.billFlow.billFlow.entity.Product;
+import com.billFlow.billFlow.entity.Tenant;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -15,6 +17,8 @@ public interface ProductRepository
     Optional<Product> findByIdAndTenant_Id(
             Long productId,
             Long tenantId);
+
+            List<Product> findByTenant(Tenant tenant);
 } 
     
 

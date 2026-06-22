@@ -55,6 +55,13 @@ public String deleteProduct(
             id,
             authentication.getName()
     );
+}@GetMapping
+public List<Product> getProducts(
+        Authentication authentication) {
+
+    return productService.getProducts(
+            authentication.getName()
+    );
 }
 
     

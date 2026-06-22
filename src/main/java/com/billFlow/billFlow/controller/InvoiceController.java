@@ -6,7 +6,7 @@ import com.billFlow.billFlow.dto.InvoiceRequest;
 import com.billFlow.billFlow.dto.InvoiceResponse;
 import com.billFlow.billFlow.service.InvoiceService;
 import lombok.RequiredArgsConstructor;
-
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -41,6 +41,13 @@ public String sendInvoiceEmail(
     invoiceService.sendInvoice(id);
 
     return "Invoice emailed successfully";
+}@GetMapping
+public List<InvoiceResponse> getInvoices(
+        Authentication authentication) {
+
+    return invoiceService.getInvoices(
+            authentication.getName()
+    );
 }
 
 }

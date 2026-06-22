@@ -100,4 +100,13 @@ public Product updateProduct(
 
     return "Product deleted successfully";
 }
+public List<Product> getProducts(String email) {
+
+    User user = userRepository
+            .findByEmail(email)
+            .orElseThrow();
+
+    return productRepository
+            .findByTenant(user.getTenant());
+}
 } 

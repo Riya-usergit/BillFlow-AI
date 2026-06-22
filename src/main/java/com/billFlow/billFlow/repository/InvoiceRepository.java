@@ -1,6 +1,8 @@
 package com.billFlow.billFlow.repository;
 
 import com.billFlow.billFlow.entity.Invoice;
+import com.billFlow.billFlow.entity.Tenant;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -63,6 +65,6 @@ List<Invoice> findOverdueInvoices(@Param("today") LocalDate today);
        "AND i.dueDate < :today")
 int markOverdueInvoices(@Param("tenantId") Long tenantId,
                         @Param("today") LocalDate today);
-
+List<Invoice> findByTenant(Tenant tenant);
                         
 }

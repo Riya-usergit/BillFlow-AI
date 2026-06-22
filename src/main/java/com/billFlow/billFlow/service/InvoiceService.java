@@ -15,6 +15,7 @@ import com.billFlow.billFlow.service.CurrentUserService;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -139,5 +140,22 @@ public void sendInvoice(Long invoiceId) {
 @Transactional
 public int updateOverdueInvoices(Long tenantId) {
     return invoiceRepository.markOverdueInvoices(tenantId, LocalDate.now());
+}public List<InvoiceResponse> getInvoices(
+        String email) {
+
+    User user = userRepository
+            .findByEmail(email)
+            .orElseThrow();
+
+    return invoiceRepository
+            .findByTenant(user.getTenant())
+            .stream()
+            .map(invoice -> InvoiceResponse.builder()
+                    .id(invoice.getId())
+                    .invoiceNumber(invoice.getInvoiceNumber())
+                    .totalAmount(invoice.getTotalAmount())
+                    .status(invoice.getStatus())
+                    .build())
+            .collect(Collectors.toList());
 }
 }

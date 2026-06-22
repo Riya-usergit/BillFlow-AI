@@ -3,7 +3,7 @@ package com.billFlow.billFlow.controller;
 import com.billFlow.billFlow.dto.PaymentRequest;
 import com.billFlow.billFlow.entity.Payment;
 import com.billFlow.billFlow.service.PaymentService;
-
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -24,4 +24,9 @@ public class PaymentController {
 
         return ResponseEntity.ok(payment);
     }
+  @GetMapping
+public List<Payment> getPayments() {
+
+    return paymentService.getPayments();
+}
 }

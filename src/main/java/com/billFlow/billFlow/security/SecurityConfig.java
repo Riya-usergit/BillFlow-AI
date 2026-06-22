@@ -19,13 +19,13 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-@Bean
+    }@Bean
 public SecurityFilterChain securityFilterChain(
         HttpSecurity http)
         throws Exception {
 
     http
+            .cors(cors -> {})
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
                     session.sessionCreationPolicy(
@@ -37,7 +37,6 @@ public SecurityFilterChain securityFilterChain(
                             .requestMatchers(
                                     "/api/auth/**"
                             )
-
                             .permitAll()
                             .requestMatchers("/api/ai/**").permitAll()
                             .anyRequest()
@@ -49,5 +48,4 @@ public SecurityFilterChain securityFilterChain(
             );
 
     return http.build();
-}
-}
+}}

@@ -5,7 +5,7 @@ import com.billFlow.billFlow.entity.Invoice;
 import com.billFlow.billFlow.entity.Payment;
 import com.billFlow.billFlow.repository.InvoiceRepository;
 import com.billFlow.billFlow.repository.PaymentRepository;
-
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
@@ -56,4 +56,7 @@ public class PaymentService {
 
         invoiceRepository.save(invoice);
     }
+    public List<Payment> getPayments() {
+    return paymentRepository.findAll();
+}
 }

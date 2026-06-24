@@ -27,6 +27,9 @@ public class AiService {
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
     private final EmailService emailService;
+
+    @org.springframework.beans.factory.annotation.Value("${ml.server.url:http://localhost:8000}")
+    private String mlServerUrl;
     public ClientHealthResponse getClientHealth(Long clientId) {
 
          System.out.println("AI SERVICE CALLED");
@@ -115,22 +118,47 @@ public class AiService {
 
     return dataset;
 }  
-public PaymentPredictionResponse predictLatePayment(
-        Double invoiceAmount,
-        Integer daysToPay) {
+    public PaymentPredictionResponse predictLatePayment(
+            Double invoiceAmount,
+            Integer daysToPay) {
 
-    PaymentPredictionRequest request =
-            new PaymentPredictionRequest(
-                    invoiceAmount,
-                    daysToPay
+        PaymentPredictionRequest request =
+                new PaymentPredictionRequest(
+                        invoiceAmount,
+                        daysToPay
+                );
+
+        try {
+            return restTemplate.postForObject(
+                    mlServerUrl + "/predict",
+                    request,
+                    PaymentPredictionResponse.class
             );
-
-    return restTemplate.postForObject(
-            "http://localhost:8000/predict",
-            request,
-            PaymentPredictionResponse.class
-    );
-}
+        } catch (Exception e) {
+            System.err.println("Failed to connect to Python ML model on " + mlServerUrl + ". Using local fallback rules. Error: " + e.getMessage());
+            
+            // Safe fallback logic
+            double probability = 0.15; // base probability 15%
+            if (invoiceAmount != null) {
+                if (invoiceAmount > 100000) {
+                    probability += 0.25;
+                } else if (invoiceAmount > 50000) {
+                    probability += 0.10;
+                }
+            }
+            if (daysToPay != null) {
+                if (daysToPay < 15) {
+                    probability += 0.20;
+                }
+            }
+            probability = Math.min(0.99, Math.max(0.01, probability));
+            
+            return PaymentPredictionResponse.builder()
+                    .latePaymentProbability(probability)
+                    .latePaymentPrediction(probability >= 0.5 ? 1 : 0)
+                    .build();
+        }
+    }
 public InvoiceRiskResponse predictInvoiceRisk(Long invoiceId) {
 
     Invoice invoice = invoiceRepository

@@ -33,6 +33,6 @@ def predict(request: PredictionRequest):
     return {
         "latePaymentPrediction": int(prediction[0]),
         "latePaymentProbability": float(
-            max(probability[0])
+            probability[0][1]
         )
     }

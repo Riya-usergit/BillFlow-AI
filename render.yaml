@@ -1,0 +1,54 @@
+services:
+  # 1. PostgreSQL Database
+  - type: db
+    name: billflow-db
+    plan: free
+    ipAllowList: []
+
+  # 2. Python ML Service (FastAPI)
+  - type: web
+    name: billflow-ml
+    plan: free
+    runtime: python
+    buildCommand: "pip install -r billflow-ml/requirements.txt"
+    startCommand: "cd billflow-ml && python -m uvicorn predict:app --host 0.0.0.0 --port $PORT"
+
+  # 3. Spring Boot Backend Web Service
+  - type: web
+    name: billflow-backend
+    plan: free
+    runtime: java
+    buildCommand: "./mvnw clean package -DskipTests"
+    startCommand: "java -jar target/billFlow-0.0.1-SNAPSHOT.jar"
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: billflow-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: billflow-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: billflow-db
+          property: password
+      - key: JWT_SECRET
+        value: MySuperSecretKeyForBillFlowProject123456789
+      - key: ML_SERVER_URL
+        value: http://billflow-ml:8000
+
+  # 4. React Frontend Static Site
+  - type: web
+    name: billflow-frontend
+    plan: free
+    runtime: static
+    buildCommand: "cd frontend && npm install && npm run build"
+    publishDir: "frontend/dist"
+    routes:
+      - type: rewrite
+        source: "/*"
+        destination: "/index.html"
+    envVars:
+      - key: VITE_API_URL
+        value: https://billflow-backend.onrender.com

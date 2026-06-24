@@ -11,6 +11,12 @@ public class InvoiceResponse {
 
     private String invoiceNumber;
 
+    private String clientName;
+
+    private String issueDate;
+
+    private String dueDate;
+
     private Double totalAmount;
 
     private String status;

@@ -41,7 +41,7 @@ public class AuthService {
                             request.getPassword()
                     )
             )
-            .role(Role.OWNER)
+            .role(request.getRole() != null ? request.getRole() : Role.OWNER)
             .tenant(tenant)
             .build();
 

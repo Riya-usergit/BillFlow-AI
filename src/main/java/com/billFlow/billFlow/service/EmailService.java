@@ -51,10 +51,10 @@ public class EmailService {
             mailSender.send(message);
 
         } catch (Exception e) {
-            throw new RuntimeException(
-                    "Failed to send email",
-                    e
-            );
+            e.printStackTrace();
+            System.err.println("EMAIL ERROR: " + e.getClass().getName());
+            System.err.println("EMAIL ERROR MSG: " + e.getMessage());
+            System.err.println("WARNING: Failed to send invoice email (SMTP might be blocked). Proceeding without throwing exception.");
         }
     }
     public void sendEmail(
@@ -74,11 +74,10 @@ public class EmailService {
         mailSender.send(message);
 
     } catch (Exception e) {
-
-        throw new RuntimeException(
-                "Failed to send email",
-                e
-        );
+        e.printStackTrace();
+        System.err.println("EMAIL ERROR: " + e.getClass().getName());
+        System.err.println("EMAIL ERROR MSG: " + e.getMessage());
+        System.err.println("WARNING: Failed to send email (SMTP might be blocked). Proceeding without throwing exception.");
     }
 }
     

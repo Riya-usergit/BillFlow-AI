@@ -124,14 +124,41 @@ List<InvoiceItemResponse> itemResponses = items.stream()
             .items(itemResponses)
             .build();
 }
+// public void sendInvoice(Long invoiceId) {
+
+//     Invoice invoice = invoiceRepository
+//             .findById(invoiceId)
+//             .orElseThrow();
+
+//     byte[] pdf =
+//             pdfService.generateInvoicePdf(invoiceId);
+
+//     emailService.sendInvoiceEmail(
+//             invoice.getClient().getEmail(),
+//             invoice.getInvoiceNumber(),
+//             pdf
+//     );
+// }
 public void sendInvoice(Long invoiceId) {
 
     Invoice invoice = invoiceRepository
             .findById(invoiceId)
             .orElseThrow();
 
-    byte[] pdf =
-            pdfService.generateInvoicePdf(invoiceId);
+    System.out.println("Invoice ID: " + invoiceId);
+    System.out.println("Invoice Number: " + invoice.getInvoiceNumber());
+
+    if (invoice.getClient() == null) {
+        throw new RuntimeException("Client is null");
+    }
+
+    System.out.println("Client Name: " + invoice.getClient().getName());
+    System.out.println("Client Email: " + invoice.getClient().getEmail());
+
+    byte[] pdf = pdfService.generateInvoicePdf(invoiceId);
+
+    System.out.println("PDF Generated: " + (pdf != null));
+    System.out.println("PDF Size: " + (pdf != null ? pdf.length : 0));
 
     emailService.sendInvoiceEmail(
             invoice.getClient().getEmail(),

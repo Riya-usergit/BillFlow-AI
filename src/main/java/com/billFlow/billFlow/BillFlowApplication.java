@@ -11,9 +11,10 @@ public class BillFlowApplication {
 		if (dbUrl == null) {
 			dbUrl = System.getenv("DATABASE_URL");
 		}
-		if (dbUrl != null && dbUrl.startsWith("postgres://")) {
+		if (dbUrl != null && (dbUrl.startsWith("postgres://") || dbUrl.startsWith("postgresql://"))) {
 			try {
-				String cleanUrl = dbUrl.substring("postgres://".length());
+				String protocol = dbUrl.startsWith("postgres://") ? "postgres://" : "postgresql://";
+				String cleanUrl = dbUrl.substring(protocol.length());
 				String[] authAndHost = cleanUrl.split("@");
 				if (authAndHost.length == 2) {
 					String[] credentials = authAndHost[0].split(":");
@@ -30,7 +31,10 @@ public class BillFlowApplication {
 					}
 				}
 			} catch (Exception e) {
-				System.setProperty("SPRING_DATASOURCE_URL", dbUrl.replace("postgres://", "jdbc:postgresql://"));
+				String fallbackUrl = dbUrl.startsWith("postgres://") ? 
+						dbUrl.replace("postgres://", "jdbc:postgresql://") : 
+						dbUrl.replace("postgresql://", "jdbc:postgresql://");
+				System.setProperty("SPRING_DATASOURCE_URL", fallbackUrl);
 			}
 		}
 		SpringApplication.run(BillFlowApplication.class, args);

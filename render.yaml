@@ -34,6 +34,8 @@ services:
         value: MySuperSecretKeyForBillFlowProject123456789
       - key: ML_SERVER_URL
         value: http://billflow-ml:8000
+      - key: PORT
+        value: 8081
 
   # 3. React Frontend Static Site
   - type: web
@@ -48,3 +50,5 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://billflow-backend.onrender.com
+      - key: NODE_VERSION
+        value: 20

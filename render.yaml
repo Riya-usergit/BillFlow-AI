@@ -18,18 +18,10 @@ services:
     plan: free
     runtime: docker
     envVars:
-      - key: DB_HOST
+      - key: SPRING_DATASOURCE_URL
         fromDatabase:
           name: billflow-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: billflow-db
-          property: port
-      - key: DB_NAME
-        fromDatabase:
-          name: billflow-db
-          property: database
+          property: connectionString
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
           name: billflow-db

@@ -39,6 +39,10 @@ public class BillFlowApplication {
 							String dbName = hostAndDb[1];
 							
 							String jdbcUrl = "jdbc:postgresql://" + hostAndPort + "/" + dbName;
+							System.setProperty("spring.datasource.url", jdbcUrl);
+							System.setProperty("spring.datasource.username", user);
+							System.setProperty("spring.datasource.password", password);
+							
 							System.setProperty("SPRING_DATASOURCE_URL", jdbcUrl);
 							System.setProperty("SPRING_DATASOURCE_USERNAME", user);
 							System.setProperty("SPRING_DATASOURCE_PASSWORD", password);
@@ -49,6 +53,7 @@ public class BillFlowApplication {
 					String fallbackUrl = dbUrl.startsWith("postgres://") ? 
 							dbUrl.replace("postgres://", "jdbc:postgresql://") : 
 							dbUrl.replace("postgresql://", "jdbc:postgresql://");
+					System.setProperty("spring.datasource.url", fallbackUrl);
 					System.setProperty("SPRING_DATASOURCE_URL", fallbackUrl);
 					System.out.println("[DB_INIT] Error parsing URL, set fallback: " + fallbackUrl);
 				}

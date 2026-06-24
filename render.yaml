@@ -12,13 +12,11 @@ services:
     buildCommand: "pip install -r billflow-ml/requirements.txt"
     startCommand: "cd billflow-ml && python -m uvicorn predict:app --host 0.0.0.0 --port $PORT"
 
-  # 2. Spring Boot Backend Web Service
+  # 2. Spring Boot Backend Web Service (Dockerized)
   - type: web
     name: billflow-backend
     plan: free
-    runtime: java
-    buildCommand: "./mvnw clean package -DskipTests"
-    startCommand: "java -jar target/billFlow-0.0.1-SNAPSHOT.jar"
+    runtime: docker
     envVars:
       - key: SPRING_DATASOURCE_URL
         fromDatabase:
@@ -38,10 +36,8 @@ services:
         value: http://billflow-ml:8000
 
   # 3. React Frontend Static Site
-  - type: web
+  - type: static
     name: billflow-frontend
-    plan: free
-    runtime: static
     buildCommand: "cd frontend && npm install && npm run build"
     staticPublishPath: "frontend/dist"
     routes:

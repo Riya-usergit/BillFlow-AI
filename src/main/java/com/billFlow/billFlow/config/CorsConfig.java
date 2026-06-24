@@ -16,9 +16,16 @@ public class CorsConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(
-                List.of("http://localhost:5173")
-        );
+        java.util.ArrayList<String> allowedOrigins = new java.util.ArrayList<>();
+        allowedOrigins.add("http://localhost:5173");
+        allowedOrigins.add("https://billflow-frontend.onrender.com");
+        
+        String frontendUrl = System.getenv("FRONTEND_URL");
+        if (frontendUrl != null && !frontendUrl.trim().isEmpty()) {
+            allowedOrigins.add(frontendUrl.trim());
+        }
+
+        configuration.setAllowedOrigins(allowedOrigins);
 
         configuration.setAllowedMethods(
                 List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")

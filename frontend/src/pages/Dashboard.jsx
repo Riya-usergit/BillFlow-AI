@@ -623,6 +623,8 @@ export const Dashboard = () => {
             <Users size={20} />
           </div>
         </div>
+      </div>
+
       {/* Charts & Status Distributions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Monthly Revenue Trend Area Chart */}
@@ -731,7 +733,6 @@ export const Dashboard = () => {
             </table>
           </div>
         )}
-      </div>
       </div>
 
       {/* Handcrafted AI Predictive Analytics Hub */}

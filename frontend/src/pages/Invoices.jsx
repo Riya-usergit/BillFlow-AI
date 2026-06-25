@@ -111,12 +111,12 @@ export const Invoices = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="bg-transparent text-slate-700 dark:text-slate-200 focus:outline-none ml-1 cursor-pointer font-bold"
             >
-              <option value="ALL">All Statuses</option>
-              <option value="DRAFT">Draft</option>
-              <option value="UNPAID">Unpaid</option>
-              <option value="PARTIAL">Partial</option>
-              <option value="PAID">Paid</option>
-              <option value="OVERDUE">Overdue</option>
+              <option value="ALL" className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">All Statuses</option>
+              <option value="DRAFT" className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Draft</option>
+              <option value="UNPAID" className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Unpaid</option>
+              <option value="PARTIAL" className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Partial</option>
+              <option value="PAID" className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Paid</option>
+              <option value="OVERDUE" className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Overdue</option>
             </select>
           </div>
 
@@ -128,10 +128,10 @@ export const Invoices = () => {
               onChange={(e) => setSortBy(e.target.value)}
               className="bg-transparent text-slate-700 dark:text-slate-200 focus:outline-none ml-1 cursor-pointer font-bold"
             >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="amount_high">Highest Amount</option>
-              <option value="amount_low">Lowest Amount</option>
+              <option value="newest" className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Newest First</option>
+              <option value="oldest" className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Oldest First</option>
+              <option value="amount_high" className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Highest Amount</option>
+              <option value="amount_low" className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Lowest Amount</option>
             </select>
           </div>
         </div>

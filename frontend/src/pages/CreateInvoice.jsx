@@ -202,9 +202,9 @@ export const CreateInvoice = () => {
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 cursor-pointer font-semibold"
                   required
                 >
-                  <option value="">Select a Client</option>
+                  <option value="" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Select a Client</option>
                   {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
+                    <option key={c.id} value={c.id} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                       {c.companyName} ({c.name})
                     </option>
                   ))}
@@ -274,9 +274,9 @@ export const CreateInvoice = () => {
                           className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
                           required
                         >
-                          <option value="">Choose item</option>
+                          <option value="" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Choose item</option>
                           {products.map((p) => (
-                            <option key={p.id} value={p.id}>
+                            <option key={p.id} value={p.id} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                               {p.name} (₹{p.price})
                             </option>
                           ))}

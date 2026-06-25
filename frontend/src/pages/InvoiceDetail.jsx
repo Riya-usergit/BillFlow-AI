@@ -460,10 +460,10 @@ export const InvoiceDetail = () => {
               onChange={(e) => setPayMethod(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
             >
-              <option value="UPI">UPI (GooglePay / PhonePe / Paytm)</option>
-              <option value="CARD">Credit / Debit Card</option>
-              <option value="NETBANKING">Net Banking</option>
-              <option value="CASH">Cash / Bank Transfer</option>
+              <option value="UPI" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">UPI (GooglePay / PhonePe / Paytm)</option>
+              <option value="CARD" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Credit / Debit Card</option>
+              <option value="NETBANKING" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Net Banking</option>
+              <option value="CASH" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Cash / Bank Transfer</option>
             </select>
           </div>
 

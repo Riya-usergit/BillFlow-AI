@@ -109,10 +109,10 @@ export const Register = () => {
             onChange={(e) => setRole(e.target.value)}
             className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
           >
-            <option value="OWNER">Business Owner (Full control)</option>
-            <option value="ACCOUNTANT">Accountant (Manage clients/invoices, record payments)</option>
-            <option value="EMPLOYEE">Company Employee (Read-only access)</option>
-            <option value="CLIENT">Client / Buyer (Simplified Customer Portal)</option>
+            <option value="OWNER" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Business Owner (Full control)</option>
+            <option value="ACCOUNTANT" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Accountant (Manage clients/invoices, record payments)</option>
+            <option value="EMPLOYEE" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Company Employee (Read-only access)</option>
+            <option value="CLIENT" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Client / Buyer (Simplified Customer Portal)</option>
           </select>
         </div>
 

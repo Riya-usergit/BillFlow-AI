@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import dashboardApi from '../services/api/dashboardApi';
 import invoiceApi from '../services/api/invoiceApi';
@@ -21,10 +21,350 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
+// Custom, zero-dependency premium SVG Area Chart component for Monthly Revenue Trend
+const AreaChart = ({ invoices }) => {
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+
+  // Group data by last 6 months
+  const chartData = useMemo(() => {
+    const months = [];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const today = new Date();
+    
+    // Create placeholders for the last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      months.push({
+        year: d.getFullYear(),
+        month: d.getMonth(),
+        label: `${monthNames[d.getMonth()]} ${d.getFullYear().toString().slice(-2)}`,
+        revenue: 0,
+        outstanding: 0,
+      });
+    }
+
+    // Accumulate invoice amounts
+    (invoices || []).forEach(inv => {
+      const dateStr = inv.issueDate || inv.createdAt;
+      if (!dateStr) return;
+      
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return;
+      
+      const invYear = date.getFullYear();
+      const invMonth = date.getMonth();
+      
+      const match = months.find(m => m.year === invYear && m.month === invMonth);
+      if (match) {
+        const amount = Number(inv.totalAmount) || 0;
+        if (inv.status === 'PAID') {
+          match.revenue += amount;
+        } else if (inv.status === 'PARTIAL') {
+          // Splitting 50/50 for partial payments
+          match.revenue += amount * 0.5;
+          match.outstanding += amount * 0.5;
+        } else {
+          match.outstanding += amount;
+        }
+      }
+    });
+
+    return months;
+  }, [invoices]);
+
+  // SVG Chart sizing
+  const width = 500;
+  const height = 220;
+  const padding = { top: 25, right: 20, bottom: 35, left: 55 };
+  
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+
+  // Find max value for Y scaling
+  const maxVal = useMemo(() => {
+    const highestVal = Math.max(
+      ...chartData.map(d => Math.max(d.revenue, d.outstanding)),
+      10000 // default minimum max value to avoid division by zero and look good
+    );
+    return Math.ceil(highestVal * 1.15);
+  }, [chartData]);
+
+  // Calculate points coordinates
+  const points = useMemo(() => {
+    return chartData.map((d, index) => {
+      const x = padding.left + (index * (chartWidth / (chartData.length - 1 || 1)));
+      const yRev = padding.top + chartHeight - (d.revenue / maxVal) * chartHeight;
+      const yOut = padding.top + chartHeight - (d.outstanding / maxVal) * chartHeight;
+      return { x, yRev, yOut, ...d };
+    });
+  }, [chartData, maxVal, chartWidth, chartHeight]);
+
+  // Cubic Bezier curve path generator (smooth horizontal tangent splines)
+  const getCurvePath = (pts, key) => {
+    if (pts.length === 0) return '';
+    let path = `M ${pts[0].x} ${pts[0][key]}`;
+    for (let i = 1; i < pts.length; i++) {
+      const p0 = pts[i - 1];
+      const p1 = pts[i];
+      const cp1x = p0.x + (p1.x - p0.x) / 2;
+      const cp1y = p0[key];
+      const cp2x = p0.x + (p1.x - p0.x) / 2;
+      const cp2y = p1[key];
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p1.x} ${p1[key]}`;
+    }
+    return path;
+  };
+
+  const revenuePath = useMemo(() => getCurvePath(points, 'yRev'), [points]);
+  const outstandingPath = useMemo(() => getCurvePath(points, 'yOut'), [points]);
+
+  const revenueArea = useMemo(() => {
+    if (!revenuePath) return '';
+    return `${revenuePath} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`;
+  }, [revenuePath, points, chartHeight]);
+
+  const outstandingArea = useMemo(() => {
+    if (!outstandingPath) return '';
+    return `${outstandingPath} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`;
+  }, [outstandingPath, points, chartHeight]);
+
+  const yTicks = [0, maxVal * 0.25, maxVal * 0.5, maxVal * 0.75, maxVal];
+
+  const formatYLabel = (val) => {
+    if (val === 0) return '₹0';
+    if (val >= 10000000) return `₹${(val / 10000000).toFixed(1)}Cr`;
+    if (val >= 100000) return `₹${(val / 100000).toFixed(1)}L`;
+    if (val >= 1000) return `₹${(val / 1000).toFixed(0)}k`;
+    return `₹${val}`;
+  };
+
+  return (
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm lg:col-span-2 relative flex flex-col justify-between overflow-hidden">
+      {/* Chart Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-slate-400">Monthly Revenue Trend</h4>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Comparison of paid revenue against outstanding invoices</p>
+        </div>
+        
+        {/* Custom Legend */}
+        <div className="flex items-center gap-4 text-[10px] font-bold">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block shadow-sm"></span>
+            <span className="text-slate-600 dark:text-slate-350">Paid Revenue</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block shadow-sm"></span>
+            <span className="text-slate-600 dark:text-slate-350">Outstanding</span>
+          </div>
+        </div>
+      </div>
+
+      {/* SVG Container */}
+      <div className="relative w-full h-[180px] sm:h-[200px]">
+        <svg 
+          viewBox={`0 0 ${width} ${height}`} 
+          className="w-full h-full overflow-visible"
+        >
+          <defs>
+            {/* Gradients */}
+            <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#6366f1" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
+            </linearGradient>
+            <linearGradient id="outstandingGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.0" />
+            </linearGradient>
+
+            {/* Glowing filter */}
+            <filter id="chartGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          {/* Grid lines */}
+          <g className="opacity-40 dark:opacity-20">
+            {yTicks.map((val, idx) => {
+              const y = padding.top + chartHeight - (val / maxVal) * chartHeight;
+              return (
+                <g key={idx}>
+                  <line 
+                    x1={padding.left} 
+                    y1={y} 
+                    x2={width - padding.right} 
+                    y2={y} 
+                    stroke="currentColor" 
+                    strokeWidth={1} 
+                    strokeDasharray={idx === 0 ? "none" : "3,3"}
+                    className="text-slate-300 dark:text-slate-700"
+                  />
+                  {/* Y Axis Labels */}
+                  <text 
+                    x={padding.left - 8} 
+                    y={y + 4} 
+                    textAnchor="end" 
+                    className="text-[9px] font-extrabold fill-slate-400 dark:fill-slate-500 font-sans"
+                  >
+                    {formatYLabel(val)}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+
+          {/* Gradient Areas */}
+          <path d={revenueArea} fill="url(#revenueGrad)" />
+          <path d={outstandingArea} fill="url(#outstandingGrad)" />
+
+          {/* Curved Stroke Lines with Glow */}
+          <path 
+            d={revenuePath} 
+            fill="none" 
+            stroke="#6366f1" 
+            strokeWidth={3} 
+            strokeLinecap="round"
+            filter="url(#chartGlow)"
+          />
+          <path 
+            d={outstandingPath} 
+            fill="none" 
+            stroke="#f59e0b" 
+            strokeWidth={3} 
+            strokeLinecap="round"
+            filter="url(#chartGlow)"
+          />
+
+          {/* X Axis Labels */}
+          <g>
+            {points.map((pt, idx) => (
+              <text 
+                key={idx} 
+                x={pt.x} 
+                y={height - 8} 
+                textAnchor="middle" 
+                className="text-[9px] font-extrabold fill-slate-400 dark:fill-slate-500 font-sans"
+              >
+                {pt.label}
+              </text>
+            ))}
+          </g>
+
+          {/* Interactive vertical hover marker */}
+          {hoveredIndex !== null && points[hoveredIndex] && (
+            <g>
+              <line 
+                x1={points[hoveredIndex].x} 
+                y1={padding.top} 
+                x2={points[hoveredIndex].x} 
+                y2={padding.top + chartHeight} 
+                stroke="currentColor" 
+                strokeWidth={1.5} 
+                strokeDasharray="4,4"
+                className="text-slate-400 dark:text-slate-600"
+              />
+              {/* Highlight dots */}
+              <circle 
+                cx={points[hoveredIndex].x} 
+                cy={points[hoveredIndex].yRev} 
+                r={6} 
+                fill="#6366f1" 
+                stroke="#fff" 
+                strokeWidth={2}
+                className="shadow-sm dark:stroke-slate-900"
+              />
+              <circle 
+                cx={points[hoveredIndex].x} 
+                cy={points[hoveredIndex].yOut} 
+                r={6} 
+                fill="#f59e0b" 
+                stroke="#fff" 
+                strokeWidth={2}
+                className="shadow-sm dark:stroke-slate-900"
+              />
+            </g>
+          )}
+
+          {/* Invisible interactive hover columns overlay */}
+          <g>
+            {points.map((pt, idx) => {
+              const colWidth = chartWidth / (points.length - 1);
+              const xStart = idx === 0 
+                ? pt.x 
+                : pt.x - colWidth / 2;
+              const xEnd = idx === points.length - 1 
+                ? pt.x 
+                : pt.x + colWidth / 2;
+              
+              return (
+                <rect
+                  key={idx}
+                  x={xStart}
+                  y={padding.top}
+                  width={xEnd - xStart}
+                  height={chartHeight}
+                  fill="transparent"
+                  className="cursor-pointer"
+                  onMouseEnter={() => setHoveredIndex(idx)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                />
+              );
+            })}
+          </g>
+        </svg>
+
+        {/* Floating Tooltip HTML Overlay */}
+        {hoveredIndex !== null && points[hoveredIndex] && (
+          <div 
+            className="absolute top-2 z-20 pointer-events-none transition-all duration-150 backdrop-blur-md bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-xl rounded-xl p-3 text-left space-y-1.5 w-[160px]"
+            style={{
+              left: `${(points[hoveredIndex].x / width) * 100}%`,
+              transform: hoveredIndex === 0 
+                ? 'translateX(10px)' 
+                : hoveredIndex === points.length - 1 
+                  ? 'translateX(-110%)' 
+                  : 'translateX(-50%)',
+            }}
+          >
+            <p className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              {points[hoveredIndex].label}
+            </p>
+            <div className="space-y-1">
+              <div className="flex justify-between items-center gap-2 text-[11px] font-semibold text-slate-600 dark:text-slate-350">
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 inline-block"></span>
+                  Paid:
+                </span>
+                <span className="font-extrabold text-slate-800 dark:text-white">
+                  ₹{points[hoveredIndex].revenue.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between items-center gap-2 text-[11px] font-semibold text-slate-600 dark:text-slate-350">
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span>
+                  Outstanding:
+                </span>
+                <span className="font-extrabold text-slate-800 dark:text-white">
+                  ₹{points[hoveredIndex].outstanding.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const Dashboard = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [invoices, setInvoices] = useState([]);
+  const [allInvoices, setAllInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // AI Calculator state
@@ -41,6 +381,7 @@ export const Dashboard = () => {
         invoiceApi.getInvoices(),
       ]);
       setStats(statsData);
+      setAllInvoices(invoicesData || []);
       const sortedInvoices = (invoicesData || [])
         .sort((a, b) => b.id - a.id)
         .slice(0, 5);
@@ -282,10 +623,11 @@ export const Dashboard = () => {
             <Users size={20} />
           </div>
         </div>
-      </div>
-
       {/* Charts & Status Distributions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Monthly Revenue Trend Area Chart */}
+        <AreaChart invoices={allInvoices} />
+
         {/* Invoice status distribution */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm lg:col-span-1">
           <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4 uppercase tracking-wider text-slate-400">Invoice Status Distribution</h4>
@@ -336,59 +678,60 @@ export const Dashboard = () => {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Recent Invoices Table */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-slate-400">Recent Invoices</h4>
-            <Link to="/invoices" className="text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline flex items-center">
-              View All Invoices <ArrowUpRight size={14} className="ml-0.5" />
+      {/* Recent Invoices Table */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm w-full">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-slate-400">Recent Invoices</h4>
+          <Link to="/invoices" className="text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline flex items-center">
+            View All Invoices <ArrowUpRight size={14} className="ml-0.5" />
+          </Link>
+        </div>
+
+        {invoices.length === 0 ? (
+          <div className="h-48 flex flex-col items-center justify-center text-center">
+            <FileText className="w-8 h-8 text-slate-300 dark:text-slate-700 mb-2" />
+            <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No invoices created yet</p>
+            <Link to="/invoices/create" className="text-xs text-primary-500 font-semibold hover:underline mt-1">
+              Create your first invoice
             </Link>
           </div>
-
-          {invoices.length === 0 ? (
-            <div className="h-48 flex flex-col items-center justify-center text-center">
-              <FileText className="w-8 h-8 text-slate-300 dark:text-slate-700 mb-2" />
-              <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No invoices created yet</p>
-              <Link to="/invoices/create" className="text-xs text-primary-500 font-semibold hover:underline mt-1">
-                Create your first invoice
-              </Link>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest bg-slate-50/20 dark:bg-slate-900/10">
-                    <th className="py-2.5 px-3">Invoice #</th>
-                    <th className="py-2.5 px-3">Client</th>
-                    <th className="py-2.5 px-3">Due Date</th>
-                    <th className="py-2.5 px-3">Total</th>
-                    <th className="py-2.5 px-3">Status</th>
-                    <th className="py-2.5 px-3 text-right">Actions</th>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest bg-slate-50/20 dark:bg-slate-900/10">
+                  <th className="py-2.5 px-3">Invoice #</th>
+                  <th className="py-2.5 px-3">Client</th>
+                  <th className="py-2.5 px-3">Due Date</th>
+                  <th className="py-2.5 px-3">Total</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+                {invoices.map((inv) => (
+                  <tr key={inv.id} className="text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
+                    <td className="py-3 px-3 font-bold text-slate-900 dark:text-white">#{inv.invoiceNumber}</td>
+                    <td className="py-3 px-3">{inv.clientName || 'N/A'}</td>
+                    <td className="py-3 px-3 font-medium text-slate-500">{inv.dueDate || 'N/A'}</td>
+                    <td className="py-3 px-3 font-black text-slate-900 dark:text-white">₹{(inv.totalAmount || 0).toLocaleString()}</td>
+                    <td className="py-3 px-3"><StatusBadge status={inv.status} /></td>
+                    <td className="py-3 px-3 text-right">
+                      <Link to={`/invoices/${inv.id}`}>
+                        <button className="text-xs font-bold text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer">
+                          Manage
+                        </button>
+                      </Link>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
-                  {invoices.map((inv) => (
-                    <tr key={inv.id} className="text-xs font-semibold text-slate-700 dark:text-slate-350 hover:bg-slate-50/50 dark:hover:bg-slate-850/20">
-                      <td className="py-3 px-3 font-bold text-slate-900 dark:text-white">#{inv.invoiceNumber}</td>
-                      <td className="py-3 px-3">{inv.clientName || 'N/A'}</td>
-                      <td className="py-3 px-3 font-medium text-slate-500">{inv.dueDate || 'N/A'}</td>
-                      <td className="py-3 px-3 font-black text-slate-900 dark:text-white">₹{(inv.totalAmount || 0).toLocaleString()}</td>
-                      <td className="py-3 px-3"><StatusBadge status={inv.status} /></td>
-                      <td className="py-3 px-3 text-right">
-                        <Link to={`/invoices/${inv.id}`}>
-                          <button className="text-xs font-bold text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer">
-                            Manage
-                          </button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
       </div>
 
       {/* Handcrafted AI Predictive Analytics Hub */}

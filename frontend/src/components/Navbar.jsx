@@ -18,9 +18,6 @@ export const Navbar = ({ toggleMobileSidebar }) => {
         >
           <Menu size={20} />
         </button>
-        <span className="font-bold text-xs text-slate-400 dark:text-slate-500 uppercase tracking-widest hidden md:inline-block">
-          SaaS Workspace
-        </span>
       </div>
 
       <div className="flex items-center gap-2">

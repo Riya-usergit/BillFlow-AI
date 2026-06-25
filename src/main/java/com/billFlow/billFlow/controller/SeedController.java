@@ -1,59 +1,34 @@
-package com.billFlow.billFlow;
+package com.billFlow.billFlow.controller;
 
 import com.billFlow.billFlow.entity.*;
 import com.billFlow.billFlow.repository.*;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.annotation.Commit;
-
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 
-@SpringBootTest
-class BillFlowApplicationTests {
+@RestController
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
+public class SeedController {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final TenantRepository tenantRepository;
+    private final ClientRepository clientRepository;
+    private final ProductRepository productRepository;
+    private final InvoiceRepository invoiceRepository;
+    private final InvoiceItemRepository invoiceItemRepository;
+    private final PaymentRepository paymentRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private TenantRepository tenantRepository;
-
-    @Autowired
-    private ClientRepository clientRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private InvoiceRepository invoiceRepository;
-
-    @Autowired
-    private InvoiceItemRepository invoiceItemRepository;
-
-    @Autowired
-    private PaymentRepository paymentRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Test
-    @Commit
-    void contextLoads() {
-    }
-
-    @Test
-    @Commit
-    void insertSampleData() {
-        // List existing users for diagnostics
-        userRepository.findAll().forEach(u -> System.out.println("DIAGNOSTIC - USER IN DB: " + u.getEmail()));
-
+    @GetMapping("/seed")
+    public String seed() {
         User user = userRepository.findByEmail("riyamprajapati@gmail.com").orElse(null);
         Tenant tenant;
 
         if (user == null) {
-            System.out.println("riyamprajapati@gmail.com not found. Registering new tenant and owner user...");
-            
             tenant = Tenant.builder()
                     .companyName("Prajapati Enterprises")
                     .build();
@@ -67,12 +42,20 @@ class BillFlowApplicationTests {
                     .tenant(tenant)
                     .build();
             userRepository.save(user);
-            System.out.println("User and tenant registered successfully.");
         } else {
             tenant = user.getTenant();
         }
 
-        System.out.println("Inserting sample data for tenant ID: " + tenant.getId() + " (" + tenant.getCompanyName() + ")");
+        // Clean existing data for this tenant
+        paymentRepository.findByTenantId(tenant.getId()).forEach(paymentRepository::delete);
+        invoiceItemRepository.findAll().forEach(item -> {
+            if (item.getInvoice() != null && tenant.getId().equals(item.getInvoice().getTenant().getId())) {
+                invoiceItemRepository.delete(item);
+            }
+        });
+        invoiceRepository.findByTenantId(tenant.getId()).forEach(invoiceRepository::delete);
+        productRepository.findByTenant_Id(tenant.getId()).forEach(productRepository::delete);
+        clientRepository.findByTenant_Id(tenant.getId()).forEach(clientRepository::delete);
 
         // 1. Create Clients
         Client client1 = Client.builder()
@@ -248,6 +231,6 @@ class BillFlowApplicationTests {
                 .build();
         paymentRepository.save(pay2);
 
-        System.out.println("Successfully inserted realistic sample records!");
+        return "Database seeded successfully!";
     }
 }

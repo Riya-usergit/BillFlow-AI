@@ -20,60 +20,68 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${resend.api.key:}")
-    private String resendApiKey;
+    @Value("${brevo.api.key:}")
+    private String brevoApiKey;
 
-    @Value("${resend.from.email:onboarding@resend.dev}")
-    private String resendFromEmail;
+    @Value("${brevo.from.email:riyamprajapati@gmail.com}")
+    private String brevoFromEmail;
 
     public void sendInvoiceEmail(
             String toEmail,
             String invoiceNumber,
             byte[] pdfBytes) {
 
-        if (resendApiKey != null && !resendApiKey.isBlank()) {
+        if (brevoApiKey != null && !brevoApiKey.isBlank()) {
             try {
-                System.out.println("Attempting to send invoice email via Resend API...");
+                System.out.println("Attempting to send invoice email via Brevo API...");
                 HttpClient client = HttpClient.newHttpClient();
                 String base64Pdf = Base64.getEncoder().encodeToString(pdfBytes);
                 
                 String jsonPayload = """
                     {
-                      "from": "%s",
-                      "to": ["%s"],
-                      "subject": "Invoice %s",
-                      "html": "<p>Hello,</p><p>Please find your invoice attached.</p><p>Regards,<br>BillFlow AI</p>",
-                      "attachments": [
+                      "sender": {
+                        "name": "BillFlow AI",
+                        "email": "%s"
+                      },
+                      "to": [
                         {
-                          "filename": "%s.pdf",
+                          "email": "%s"
+                        }
+                      ],
+                      "subject": "Invoice %s",
+                      "htmlContent": "<p>Hello,</p><p>Please find your invoice attached.</p><p>Regards,<br>BillFlow AI</p>",
+                      "attachment": [
+                        {
+                          "name": "%s.pdf",
                           "content": "%s"
                         }
                       ]
                     }
-                    """.formatted(resendFromEmail, toEmail, invoiceNumber, invoiceNumber, base64Pdf);
+                    """.formatted(brevoFromEmail, toEmail, invoiceNumber, invoiceNumber, base64Pdf);
 
                 HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create("https://api.resend.com/emails"))
-                        .header("Authorization", "Bearer " + resendApiKey)
+                        .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
+                        .header("api-key", brevoApiKey)
                         .header("Content-Type", "application/json")
+                        .header("Accept", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                         .build();
 
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                 if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                    System.out.println("Email sent successfully via Resend API. Status code: " + response.statusCode());
+                    System.out.println("Email sent successfully via Brevo API. Status code: " + response.statusCode());
                     return;
                 } else {
-                    System.err.println("Failed to send email via Resend API. Status: " + response.statusCode() + ", Response: " + response.body());
+                    System.err.println("Failed to send email via Brevo API. Status: " + response.statusCode() + ", Response: " + response.body());
                 }
             } catch (Exception e) {
-                System.err.println("Error sending email via Resend API: " + e.getMessage());
+                System.err.println("Error sending email via Brevo API: " + e.getMessage());
                 e.printStackTrace();
             }
         }
 
         // Fallback to SMTP
-        System.out.println("Resend API not configured or failed. Falling back to SMTP...");
+        System.out.println("Brevo API not configured or failed. Falling back to SMTP...");
         try {
 
             MimeMessage message =
@@ -119,46 +127,54 @@ public class EmailService {
             String subject,
             String body) {
 
-        if (resendApiKey != null && !resendApiKey.isBlank()) {
+        if (brevoApiKey != null && !brevoApiKey.isBlank()) {
             try {
-                System.out.println("Attempting to send email via Resend API...");
+                System.out.println("Attempting to send email via Brevo API...");
                 HttpClient client = HttpClient.newHttpClient();
                 String jsonPayload = """
                     {
-                      "from": "%s",
-                      "to": ["%s"],
+                      "sender": {
+                        "name": "BillFlow AI",
+                        "email": "%s"
+                      },
+                      "to": [
+                        {
+                          "email": "%s"
+                        }
+                      ],
                       "subject": "%s",
-                      "html": "<p>%s</p>"
+                      "htmlContent": "<p>%s</p>"
                     }
                     """.formatted(
-                        resendFromEmail,
+                        brevoFromEmail,
                         toEmail,
                         subject.replace("\"", "\\\""),
                         body.replace("\"", "\\\"").replace("\n", "<br>")
                     );
 
                 HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create("https://api.resend.com/emails"))
-                        .header("Authorization", "Bearer " + resendApiKey)
+                        .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
+                        .header("api-key", brevoApiKey)
                         .header("Content-Type", "application/json")
+                        .header("Accept", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                         .build();
 
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                 if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                    System.out.println("Email sent successfully via Resend API. Status code: " + response.statusCode());
+                    System.out.println("Email sent successfully via Brevo API. Status code: " + response.statusCode());
                     return;
                 } else {
-                    System.err.println("Failed to send email via Resend API. Status: " + response.statusCode() + ", Response: " + response.body());
+                    System.err.println("Failed to send email via Brevo API. Status: " + response.statusCode() + ", Response: " + response.body());
                 }
             } catch (Exception e) {
-                System.err.println("Error sending email via Resend API: " + e.getMessage());
+                System.err.println("Error sending email via Brevo API: " + e.getMessage());
                 e.printStackTrace();
             }
         }
 
         // Fallback to SMTP
-        System.out.println("Resend API not configured or failed. Falling back to SMTP...");
+        System.out.println("Brevo API not configured or failed. Falling back to SMTP...");
         try {
 
             SimpleMailMessage message =

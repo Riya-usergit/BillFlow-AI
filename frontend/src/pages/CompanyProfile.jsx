@@ -70,18 +70,18 @@ export const CompanyProfile = () => {
           {/* Infrastructure status card */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 md:p-6 shadow-sm space-y-4">
             <h3 className="text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
-              <Server size={16} /> SMTP Mail Gateway Integration
+              <Server size={16} /> Brevo REST API Gateway Integration
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-semibold">
               <div className="space-y-1 bg-slate-50 dark:bg-slate-950/20 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                 <p className="text-slate-400">Mail Gateway Host</p>
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">smtp.gmail.com</p>
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">api.brevo.com</p>
               </div>
 
               <div className="space-y-1 bg-slate-50 dark:bg-slate-950/20 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                <p className="text-slate-400">SMTP Port</p>
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">587 (TLS Enabled)</p>
+                <p className="text-slate-400">Delivery Port</p>
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">443 (HTTPS Secure)</p>
               </div>
 
               <div className="space-y-1 bg-slate-50 dark:bg-slate-950/20 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
@@ -92,7 +92,7 @@ export const CompanyProfile = () => {
               <div className="space-y-1 bg-slate-50 dark:bg-slate-950/20 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                 <p className="text-slate-400">Email Dispatch Status</p>
                 <span className="inline-flex items-center text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-lg mt-1">
-                  <Activity size={10} className="mr-1" /> GATEWAY CONNECTED
+                  <Activity size={10} className="mr-1" /> BREVO REST API ACTIVE
                 </span>
               </div>
             </div>
@@ -128,7 +128,7 @@ export const CompanyProfile = () => {
                   <p className="text-slate-400">Tenant DB Mode</p>
                   <div className="flex items-center gap-2 text-slate-900 dark:text-white mt-1">
                     <Database size={15} className="text-primary-500" />
-                    <span className="font-bold">MySQL Tenant Partitioning</span>
+                    <span className="font-bold">PostgreSQL Partitioning</span>
                   </div>
                 </div>
               </div>
